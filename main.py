@@ -1,3 +1,5 @@
+import os.path
+
 import pandas as pd
 from odf.opendocument import load
 from odf.table import Table, TableRow, TableCell
@@ -33,7 +35,7 @@ def convert_ods_to_csv(ods_file):
     return csv_file
 
 
-def addSomeCol(fileCSV, nameCol, colA, colB, typeCol):
+def addSomeCol(fileCSV, nameCol, colA, colB, colC, colD, colE, typeCol, course):
     try:
         df = pd.read_csv(fileCSV)
 
@@ -45,12 +47,25 @@ def addSomeCol(fileCSV, nameCol, colA, colB, typeCol):
                 return 0.0
 
         if typeCol == 'zone':
-            sumCols = df[colA].apply(convertFloat) + df[colB].apply(convertFloat)
-            totalRes = sumCols * 100 / 20 * 75 / 100
-            df[nameCol] = totalRes.round(2)
+
+            if course == 'pw':
+                sumCols = df[colA].apply(convertFloat) + df[colB].apply(convertFloat)
+                totalRes = sumCols * 100 / 20 * 75 / 100
+                df[nameCol] = totalRes.round(2)
+            elif course == 'wd':
+                sumCols = (df[colA].apply(convertFloat) + df[colB].apply(convertFloat) + df[colC].apply(convertFloat)
+                           + df[colD].apply(convertFloat) + df[colE].apply(convertFloat))
+                totalRes = sumCols * 100 / 50 * 75 / 100
+                df[nameCol] = totalRes.round(2)
+
         elif typeCol == 'exam':
-            totalRes = df[colA].apply(convertFloat) * 100 / 10 * 25 / 100
-            df[nameCol] = totalRes.round(2)
+
+            if course == 'pw':
+                totalRes = df[colA].apply(convertFloat) * 100 / 10 * 25 / 100
+                df[nameCol] = totalRes.round(2)
+            elif course == 'wd':
+                totalRes = df[colA].apply(convertFloat) / 100 * 25
+                df[nameCol] = totalRes.round(2)
         else:
             df[nameCol] = 100
 
@@ -80,7 +95,7 @@ def sendCols(sourceCSV, sourceCol, destinyCSV, destinyCol, colSourceID, colDesti
         print("Error: ", str(e))
 
 
-def operate(file1, file2):
+def operate(file1, file2, course):
     oldFile2 = file2
     if file1.endswith('.xlsx'):
         file1 = convert_xlsx_to_csv(file1)
@@ -92,24 +107,49 @@ def operate(file1, file2):
     elif file2.endswith('.ods'):
         file2 = convert_ods_to_csv(file2)
 
-    addSomeCol(file1, 'Zona', 'Examen:EXAMEN CORTO 1 (Real)', 'Examen:Examen Corto 2 (Real)', 'zone')
+    if course == 'pw':
+        addSomeCol(file1, 'Zona', 'Examen:EXAMEN CORTO 1 (Real)', 'Examen:Examen Corto 2 (Real)',
+                   '', '', '', 'zone', course)
+        addSomeCol(file1, 'Final', 'Examen:EXAMEN FINAL (Real)', '',
+                   '', '', '', 'exam', course)
 
-    addSomeCol(file1, 'Final', 'Examen:EXAMEN FINAL (Real)', '', 'exam')
+    elif course == 'wd':
+        addSomeCol(file1, 'Zona', 'Examen:Corto unidad 1 (Real)', 'Examen:Corto unidad 2 (Real)',
+                   'Examen:Corto unidad 3 (Real)', 'Examen:Corto unidad 4 (Real)',
+                   'Examen:Corto unidad 5 (Real)', 'zone', course)
+        addSomeCol(file1, 'Final', 'Examen:Examen final (Real)', '',
+                   '', '', '', 'exam', course)
 
-    addSomeCol(file2, 'Laboratorio 100%', '', '', 'lab')
-
-    addSomeCol(file2, 'Asistencia 100%', '', '', 'asistence')
-
+    addSomeCol(file2, 'Laboratorio 100%', '', '', '', '', '', 'lab', course)
+    addSomeCol(file2, 'Asistencia 100%', '', '', '', '', '', 'asistence', course)
     sendCols(file1, 'Zona', file2, 'Zona', 'Número de ID',
              'CUI/Pasaporte', oldFile2)
-
     sendCols(file1, 'Final', file2, 'Final', 'Número de ID',
              'CUI/Pasaporte', oldFile2)
 
+    deleteCSV(file1)
+    deleteCSV(file2)
+
+
+def deleteCSV(file):
+    try:
+        if os.path.exists(file):
+            os.remove(file)
+        else:
+            print("Doesn't exists")
+    except Exception as e:
+        print("Error: ", str(e))
+
 
 def main():
-    operate('./test/MICROSOFT POWER POINT VIRTUAL_CB_2024_1 Calificaciones.ods',
-            './test/Estudiantes MICROSOFT POWER POINT VIRTUAL CB.xlsx')
+    # operate('./test/MICROSOFT POWER POINT VIRTUAL_CF_2024_1 Calificaciones.ods',
+    #         './test/Estudiantes MICROSOFT POWER POINT VIRTUAL CF.xlsx', 'pw')
+    folder = './test2'
+    files = os.listdir(folder)
+    file1 = [file for file in files if file.endswith('.ods')]
+    file2 = [file for file in files if file.endswith('.xlsx')]
+
+    operate(os.path.join(folder, file1[0]), os.path.join(folder, file2[0]), 'wd')
 
 
 main()
