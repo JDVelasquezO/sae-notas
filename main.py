@@ -90,6 +90,7 @@ def sendCols(sourceCSV, sourceCol, destinyCSV, destinyCol, colSourceID, colDesti
         dfDest.to_excel(excelFile, index=False, engine='openpyxl')
 
         print(f"Added cols from source to destination from {colSourceID} to {colDestinationID}")
+        print("Todo bien")
 
     except Exception as e:
         print("Error: ", str(e))
