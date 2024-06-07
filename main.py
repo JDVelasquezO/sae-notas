@@ -57,6 +57,21 @@ def addSomeCol(fileCSV, nameCol, colA, colB, colC, colD, colE, typeCol, course):
                            + df[colD].apply(convertFloat) + df[colE].apply(convertFloat))
                 totalRes = sumCols * 100 / 50 * 75 / 100
                 df[nameCol] = totalRes.round(2)
+            elif course == 'pr':
+                sumCols = df[colA].apply(convertFloat) + df[colB].apply(convertFloat) + df[colC].apply(convertFloat)
+                totalRes = sumCols * 100 / 75 * 75 / 100
+                df[nameCol] = totalRes.round(2)
+            elif course == 'wd0090':
+                sumCols = (df[colA].apply(convertFloat) + df[colB].apply(convertFloat)
+                           + df[colC].apply(convertFloat) + df[colD].apply(convertFloat))
+                totalRes = sumCols
+                df[nameCol] = totalRes.round(2)
+            elif course == 'pw0090':
+                sumCols = (df[colA].apply(convertFloat) + df[colB].apply(convertFloat)
+                           + df[colC].apply(convertFloat) + df[colD].apply(convertFloat)
+                           + df[colE].apply(convertFloat))
+                totalRes = sumCols
+                df[nameCol] = totalRes.round(2)
 
         elif typeCol == 'exam':
 
@@ -65,6 +80,15 @@ def addSomeCol(fileCSV, nameCol, colA, colB, colC, colD, colE, typeCol, course):
                 df[nameCol] = totalRes.round(2)
             elif course == 'wd':
                 totalRes = df[colA].apply(convertFloat) / 100 * 25
+                df[nameCol] = totalRes.round(2)
+            elif course == 'pr':
+                totalRes = df[colA].apply(convertFloat) / 100 * 25
+                df[nameCol] = totalRes.round(2)
+            elif course == 'wd0090':
+                totalRes = df[colA].apply(convertFloat)
+                df[nameCol] = totalRes.round(2)
+            elif course == 'pw0090':
+                totalRes = df[colA].apply(convertFloat)
                 df[nameCol] = totalRes.round(2)
         else:
             df[nameCol] = 100
@@ -121,6 +145,30 @@ def operate(file1, file2, course):
         addSomeCol(file1, 'Final', 'Examen:Examen final (Real)', '',
                    '', '', '', 'exam', course)
 
+    elif course == 'pr':
+        addSomeCol(file1, 'Zona', 'Examen:Hoja de trabajo 1 (Real)',
+                   'Examen:Hoja de trabajo 2 (Real)',
+                   'Examen:Proyecto mi casa (Real)', '', '', 'zone', course)
+        addSomeCol(file1, 'Final', 'Examen:Examen final (Real)', '',
+                   '', '', '', 'exam', course)
+
+    elif course == 'wd0090':
+        addSomeCol(file1, 'Zona', 'Examen:Evaluación Unidad 1 (Real)',
+                   'Examen:Evaluación Unidad 2 (Real)',
+                   'Examen:Evaluación Unidad 3 (Real)',
+                   'Examen:Evaluación Unidad 4 (Real)', '', 'zone', course)
+        addSomeCol(file1, 'Final', 'Examen:Evaluación Final (Real)', '',
+                   '', '', '', 'exam', course)
+
+    elif course == 'pw0090':
+        addSomeCol(file1, 'Zona', 'Examen:Evaluación Unidad 1 (Real)',
+                   'Examen:Evaluación Unidad 2 (Real)',
+                   'Examen:Evaluación Unidad 3 (Real)',
+                   'Examen:Evaluación Unidad 5 (Real)',
+                   'Examen:Evaluación Unidad 4 (Real)', 'zone', course)
+        addSomeCol(file1, 'Final', 'Examen:Evaluación Final (Real)', '',
+                   '', '', '', 'exam', course)
+
     addSomeCol(file2, 'Laboratorio 100%', '', '', '', '', '', 'lab', course)
     addSomeCol(file2, 'Asistencia 100%', '', '', '', '', '', 'asistence', course)
     sendCols(file1, 'Zona', file2, 'Zona', 'Número de ID',
@@ -145,12 +193,11 @@ def deleteCSV(file):
 def main():
     # operate('./test/MICROSOFT POWER POINT VIRTUAL_CF_2024_1 Calificaciones.ods',
     #         './test/Estudiantes MICROSOFT POWER POINT VIRTUAL CF.xlsx', 'pw')
-    folder = './test2'
+    folder = './test4'
     files = os.listdir(folder)
     file1 = [file for file in files if file.endswith('.ods')]
     file2 = [file for file in files if file.endswith('.xlsx')]
 
-    operate(os.path.join(folder, file1[0]), os.path.join(folder, file2[0]), 'wd')
-
+    operate(os.path.join(folder, file1[0]), os.path.join(folder, file2[0]), 'wd0090')
 
 main()
