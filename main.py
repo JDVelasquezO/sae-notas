@@ -1,9 +1,11 @@
+import json
 import os.path
 
 import pandas as pd
 from odf.opendocument import load
 from odf.table import Table, TableRow, TableCell
 from odf.text import P
+from functools import reduce
 
 
 # Función para convertir archivo xlsx a csv
@@ -35,7 +37,7 @@ def convert_ods_to_csv(ods_file):
     return csv_file
 
 
-def addSomeCol(fileCSV, nameCol, colA, colB, colC, colD, colE, typeCol, course):
+def addSomeCol(fileCSV, nameCol, objectCols):
     try:
         df = pd.read_csv(fileCSV)
 
@@ -46,50 +48,20 @@ def addSomeCol(fileCSV, nameCol, colA, colB, colC, colD, colE, typeCol, course):
             except ValueError:
                 return 0.0
 
-        if typeCol == 'zone':
+        file1 = objectCols.get("file1")
 
-            if course == 'pw':
-                sumCols = df[colA].apply(convertFloat) + df[colB].apply(convertFloat)
-                totalRes = sumCols * 100 / 20 * 75 / 100
-                df[nameCol] = totalRes.round(2)
-            elif course == 'wd':
-                sumCols = (df[colA].apply(convertFloat) + df[colB].apply(convertFloat) + df[colC].apply(convertFloat)
-                           + df[colD].apply(convertFloat) + df[colE].apply(convertFloat))
-                totalRes = sumCols * 100 / 50 * 75 / 100
-                df[nameCol] = totalRes.round(2)
-            elif course == 'pr':
-                sumCols = df[colA].apply(convertFloat) + df[colB].apply(convertFloat) + df[colC].apply(convertFloat)
-                totalRes = sumCols * 100 / 75 * 75 / 100
-                df[nameCol] = totalRes.round(2)
-            elif course == 'wd0090':
-                sumCols = (df[colA].apply(convertFloat) + df[colB].apply(convertFloat)
-                           + df[colC].apply(convertFloat) + df[colD].apply(convertFloat))
-                totalRes = sumCols
-                df[nameCol] = totalRes.round(2)
-            elif course == 'pw0090':
-                sumCols = (df[colA].apply(convertFloat) + df[colB].apply(convertFloat)
-                           + df[colC].apply(convertFloat) + df[colD].apply(convertFloat)
-                           + df[colE].apply(convertFloat))
-                totalRes = sumCols
-                df[nameCol] = totalRes.round(2)
+        if nameCol == "Zona":
+            arrayColsZone = file1.get("colZone").get("cols")
+            sumCols = reduce(lambda acc, item: acc + df[item.get('col', 0)].apply(convertFloat),
+                             arrayColsZone, 0)
+            totalRes = sumCols * 100 / file1.get("totalZone") * 75 / 100
+            df[nameCol] = totalRes.round(2)
 
-        elif typeCol == 'exam':
+        elif nameCol == "Final":
+            colExam = file1.get("colExam").get("colA")
+            totalRes = df[colExam].apply(convertFloat) * 100 / file1.get("totalFinal") * 25 / 100
+            df[nameCol] = totalRes.round(2)
 
-            if course == 'pw':
-                totalRes = df[colA].apply(convertFloat) * 100 / 10 * 25 / 100
-                df[nameCol] = totalRes.round(2)
-            elif course == 'wd':
-                totalRes = df[colA].apply(convertFloat) / 100 * 25
-                df[nameCol] = totalRes.round(2)
-            elif course == 'pr':
-                totalRes = df[colA].apply(convertFloat) / 100 * 25
-                df[nameCol] = totalRes.round(2)
-            elif course == 'wd0090':
-                totalRes = df[colA].apply(convertFloat)
-                df[nameCol] = totalRes.round(2)
-            elif course == 'pw0090':
-                totalRes = df[colA].apply(convertFloat)
-                df[nameCol] = totalRes.round(2)
         else:
             df[nameCol] = 100
 
@@ -120,7 +92,7 @@ def sendCols(sourceCSV, sourceCol, destinyCSV, destinyCol, colSourceID, colDesti
         print("Error: ", str(e))
 
 
-def operate(file1, file2, course):
+def operate(file1, file2, fileCols):
     oldFile2 = file2
     if file1.endswith('.xlsx'):
         file1 = convert_xlsx_to_csv(file1)
@@ -132,45 +104,12 @@ def operate(file1, file2, course):
     elif file2.endswith('.ods'):
         file2 = convert_ods_to_csv(file2)
 
-    if course == 'pw':
-        addSomeCol(file1, 'Zona', 'Examen:EXAMEN CORTO 1 (Real)', 'Examen:Examen Corto 2 (Real)',
-                   '', '', '', 'zone', course)
-        addSomeCol(file1, 'Final', 'Examen:EXAMEN FINAL (Real)', '',
-                   '', '', '', 'exam', course)
+    addSomeCol(file1, 'Zona', fileCols)
+    addSomeCol(file1, 'Final', fileCols)
 
-    elif course == 'wd':
-        addSomeCol(file1, 'Zona', 'Examen:Corto unidad 1 (Real)', 'Examen:Corto unidad 2 (Real)',
-                   'Examen:Corto unidad 3 (Real)', 'Examen:Corto unidad 4 (Real)',
-                   'Examen:Corto unidad 5 (Real)', 'zone', course)
-        addSomeCol(file1, 'Final', 'Examen:Examen final (Real)', '',
-                   '', '', '', 'exam', course)
+    addSomeCol(file2, 'Laboratorio 100%', fileCols)
+    addSomeCol(file2, 'Asistencia 100%', fileCols)
 
-    elif course == 'pr':
-        addSomeCol(file1, 'Zona', 'Examen:Hoja de trabajo 1 (Real)',
-                   'Examen:Hoja de trabajo 2 (Real)',
-                   'Examen:Proyecto mi casa (Real)', '', '', 'zone', course)
-        addSomeCol(file1, 'Final', 'Examen:Examen final (Real)', '',
-                   '', '', '', 'exam', course)
-
-    elif course == 'wd0090':
-        addSomeCol(file1, 'Zona', 'Examen:Evaluación Unidad 1 (Real)',
-                   'Examen:Evaluación Unidad 2 (Real)',
-                   'Examen:Evaluación Unidad 3 (Real)',
-                   'Examen:Evaluación Unidad 4 (Real)', '', 'zone', course)
-        addSomeCol(file1, 'Final', 'Examen:Evaluación Final (Real)', '',
-                   '', '', '', 'exam', course)
-
-    elif course == 'pw0090':
-        addSomeCol(file1, 'Zona', 'Examen:Evaluación Unidad 1 (Real)',
-                   'Examen:Evaluación Unidad 2 (Real)',
-                   'Examen:Evaluación Unidad 3 (Real)',
-                   'Examen:Evaluación Unidad 5 (Real)',
-                   'Examen:Evaluación Unidad 4 (Real)', 'zone', course)
-        addSomeCol(file1, 'Final', 'Examen:Evaluación Final (Real)', '',
-                   '', '', '', 'exam', course)
-
-    addSomeCol(file2, 'Laboratorio 100%', '', '', '', '', '', 'lab', course)
-    addSomeCol(file2, 'Asistencia 100%', '', '', '', '', '', 'asistence', course)
     sendCols(file1, 'Zona', file2, 'Zona', 'Número de ID',
              'CUI/Pasaporte', oldFile2)
     sendCols(file1, 'Final', file2, 'Final', 'Número de ID',
@@ -191,13 +130,20 @@ def deleteCSV(file):
 
 
 def main():
-    # operate('./test/MICROSOFT POWER POINT VIRTUAL_CF_2024_1 Calificaciones.ods',
-    #         './test/Estudiantes MICROSOFT POWER POINT VIRTUAL CF.xlsx', 'pw')
-    folder = './test4'
+    print("Escribe la ruta de tu forlder")
+    folder = input()
+    # folder = './test'
     files = os.listdir(folder)
     file1 = [file for file in files if file.endswith('.ods')]
     file2 = [file for file in files if file.endswith('.xlsx')]
 
-    operate(os.path.join(folder, file1[0]), os.path.join(folder, file2[0]), 'wd0090')
+    print("Escribe la ruta de tu json:")
+    fileJson = input()
+
+    with open(fileJson, 'r') as file:
+        fileCols = json.load(file)
+
+    operate(os.path.join(folder, file1[0]), os.path.join(folder, file2[0]), fileCols)
+
 
 main()
