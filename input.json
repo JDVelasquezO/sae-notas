@@ -3,20 +3,17 @@
       "colZone": {
          "cols": [
           {
-            "col": "Examen:Evaluación Unidad 1 (Real)"
+            "col": "Examen:Evaluación de la sesión 1 (Real)"
           },
           {
-            "col": "Examen:Evaluación Unidad 2 (Real)"
+            "col": "Examen:Evaluación sesión 2 (Real)"
           },
-           {
-             "col": "Examen:Evaluación Unidad 3 (Real)"
-           },
-           {
-             "col": "Examen:Evaluación Unidad 4 (Real)"
-           },
-           {
-             "col": "Examen:Evaluación Unidad 5 (Real)"
-           }
+          {
+            "col": "Examen:Evaluación sesión 3 (Real)"
+          },
+          {
+            "col": "Examen:Evaluación de la sesión 4 (Real)"
+          }
          ]
       },
     "colExam": {
